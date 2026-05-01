@@ -3,6 +3,7 @@ import React, { useEffect, useLayoutEffect, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { useDispatch, useSelector } from "react-redux";
+import { useFeatureIsOn } from "@growthbook/growthbook-react";
 import Split from "react-split";
 import { getUserAuthDetails } from "store/slices/global/user/selectors";
 import { RootState } from "store/types";
@@ -14,6 +15,8 @@ import { useWorkspaceLoadingError } from "./slices";
 import { getWorkspaceViewSlice } from "./slices/workspaceView/slice";
 import { setupWorkspaceView } from "./slices/workspaceView/thunks";
 import Daemon from "./store/apiRecords/Daemon";
+import { MigrationBlockModal } from "./screens/migrationBlock";
+import { MIGRATION_BLOCK_FLAG } from "./screens/migrationBlock/constants";
 
 const ApiClientFeatureContainer: React.FC = () => {
   const dispatch = useDispatch();
@@ -21,6 +24,11 @@ const ApiClientFeatureContainer: React.FC = () => {
   const isSetupDone = useSelector((s: RootState) => getWorkspaceViewSlice(s).isSetupDone);
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
   const loadingError = useWorkspaceLoadingError();
+
+  // Block-modal mount: container only gates on the show-flag (kill-switch).
+  // The modal reads its own per-variant flags (dismissable, cloud-force)
+  // internally, so adding new variants doesn't churn this file.
+  const isBlockFlagOn = useFeatureIsOn(MIGRATION_BLOCK_FLAG);
 
   useLayoutEffect(() => {
     const handleResize = () => {
@@ -80,6 +88,7 @@ const ApiClientFeatureContainer: React.FC = () => {
             <APIClientSidebar />
             <TabsContainer />
           </Split>
+          {isBlockFlagOn && <MigrationBlockModal />}
         </ApiClientProvider>
       </div>
     </DndProvider>
